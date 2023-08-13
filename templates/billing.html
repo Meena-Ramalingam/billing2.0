@@ -40,72 +40,82 @@
         <button id="submitBill" type="submit">Submit Bill</button>
     </form>
     
+    
     <script>
-    $(document).ready(function() {
-        $('#addProduct').on('click', function() {
-            var newRow = $('.product-row').first().clone();
-            newRow.find('input').val('');
-            newRow.find('.product-name, .price, .total').text('');
-            $('#billingTable tbody').append(newRow);
-        });
-
-        $('#billingTable').on('input', '.product-code-input', function() {
-            var productCode = $(this).val();
-            var row = $(this).closest('tr');
-            $.ajax({
-                type: 'POST',
-                url: '/get_product_data',
-                contentType: 'application/json',
-                data: JSON.stringify({'product_code': productCode}),
-                success: function(response) {
-                    row.find('.product-name').text(response.product_name);
-                    row.find('.price').text(response.price);
-                    calculateRowTotal(row);
-                    updateFinalAmount();
-                }
+        $(document).ready(function() {
+            $('#addProduct').on('click', function() {
+                var newRow = $('.product-row').first().clone();
+                newRow.find('input').val('');
+                newRow.find('.product-name, .price, .total').text('');
+                $('#billingTable tbody').append(newRow);
             });
-        });
-
-        $('#billingTable').on('input', '.quantity-input', function() {
-            var row = $(this).closest('tr');
-            calculateRowTotal(row);
-            updateFinalAmount();
-        });
-
-        $('#submitBill').on('click', function() {
-            var productData = [];
-            $('.product-row').each(function() {
-                var productCode = $(this).find('.product-code-input').val();
-                var quantity = parseInt($(this).find('.quantity-input').val());
-                productData.push({ 'product_code': productCode, 'quantity': quantity });
+    
+            $('#billingTable').on('input', '.product-code-input', function() {
+                var productCode = $(this).val();
+                var row = $(this).closest('tr');
+                $.ajax({
+                    type: 'POST',
+                    url: '/get_product_data',
+                    contentType: 'application/json',
+                    data: JSON.stringify({'product_code': productCode}),
+                    success: function(response) {
+                        row.find('.product-name').text(response.product_name);
+                        row.find('.price').text(response.price);
+                        calculateRowTotal(row);
+                        updateFinalAmount();
+                    }
+                });
             });
-
-            // Set the hidden input values with product code and quantity
-            $('input[name="product_code"]').val(JSON.stringify(productData.map(p => p.product_code)));
-            $('input[name="quantity"]').val(JSON.stringify(productData.map(p => p.quantity)));
-        });
-
-        function calculateRowTotal(row) {
-            var price = parseFloat(row.find('.price').text());
-            var quantity = parseInt(row.find('.quantity-input').val());
-            var total = (isNaN(price) || isNaN(quantity)) ? 0 : (price * quantity);
-            row.find('.total').text(total.toFixed(2));
-        }
-
-        function updateFinalAmount() {
-            var totalAmount = 0;
-            $('.total').each(function() {
-                totalAmount += parseFloat($(this).text());
+    
+            $('#billingTable').on('input', '.quantity-input', function() {
+                var row = $(this).closest('tr');
+                calculateRowTotal(row);
+                updateFinalAmount();
             });
+    
+            $('#submitBill').on('click', function() {
+    var productData = [];
+    $('.product-row').each(function() {
+        var productCode = $(this).find('.product-code-input').val();
+        var quantity = parseInt($(this).find('.quantity-input').val());
+        productData.push({ 'product_code': productCode, 'quantity': quantity });
+    });
 
-            var gstPercent = 18; // Example GST rate
-            var gstAmount = (gstPercent / 100) * totalAmount;
-            var finalAmount = totalAmount + gstAmount;
-
-            $('#gst').text(gstPercent);
-            $('#total-amount').text(finalAmount.toFixed(2));
+    $.ajax({
+        type: 'POST',
+        url: '/submit_bill',
+        contentType: 'application/json',  // Set the content type to JSON
+        data: JSON.stringify({ 'product_data': productData }),  // Convert data to JSON format
+        success: function(response) {
+            // Redirect to the "Thank You" page
+            window.location.href = '/thank_you';
         }
     });
+});
+
+    
+            function calculateRowTotal(row) {
+                var price = parseFloat(row.find('.price').text());
+                var quantity = parseInt(row.find('.quantity-input').val());
+                var total = (isNaN(price) || isNaN(quantity)) ? 0 : (price * quantity);
+                row.find('.total').text(total.toFixed(2));
+            }
+    
+            function updateFinalAmount() {
+                var totalAmount = 0;
+                $('.total').each(function() {
+                    totalAmount += parseFloat($(this).text());
+                });
+    
+                var gstPercent = 18; // Example GST rate
+                var gstAmount = (gstPercent / 100) * totalAmount;
+                var finalAmount = totalAmount + gstAmount;
+    
+                $('#gst').text(gstPercent);
+                $('#total-amount').text(finalAmount.toFixed(2));
+            }
+        });
     </script>
+    
 </body>
 </html>
