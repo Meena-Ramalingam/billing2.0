@@ -80,12 +80,12 @@
         var quantity = parseInt($(this).find('.quantity-input').val());
         productData.push({ 'product_code': productCode, 'quantity': quantity });
     });
-
+    console.log(productData);
     $.ajax({
         type: 'POST',
         url: '/submit_bill',
         contentType: 'application/json',  // Set the content type to JSON
-        data: JSON.stringify({ 'product_data': productData }),  // Convert data to JSON format
+        data: JSON.stringify({ 'product_data': productData }), // Convert data to JSON format
         success: function(response) {
             // Redirect to the "Thank You" page
             window.location.href = '/thank_you';
